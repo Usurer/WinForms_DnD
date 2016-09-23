@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Drawing;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
 namespace DataGrid
@@ -10,6 +11,27 @@ namespace DataGrid
         private SuperPanel draggedPanel;
         private SuperPanel hoveredPanel; // parent, over which the mouse is located
         private Cursor panelCursor;
+
+        //http://stackoverflow.com/questions/550918/change-cursor-hotspot-in-winforms-net
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool GetIconInfo(IntPtr hIcon, ref IconInfo pIconInfo);
+
+        [DllImport("user32.dll")]
+        public static extern IntPtr CreateIconIndirect(ref IconInfo icon);
+
+
+        public static Cursor CreateCursorNoResize(Bitmap bmp)
+        {
+            IntPtr ptr = bmp.GetHicon();
+            IconInfo tmp = new IconInfo();
+            GetIconInfo(ptr, ref tmp);
+            tmp.xHotspot = 0;
+            tmp.yHotspot = 0;
+            tmp.fIcon = false;
+            ptr = CreateIconIndirect(ref tmp);
+            return new Cursor(ptr);
+        }
 
         public Form2()
         {
@@ -244,7 +266,8 @@ namespace DataGrid
                 //optionally define a transparent color
                 //bmp.MakeTransparent(System.Drawing.Color.White);
 
-                panelCursor = new Cursor(bmp.GetHicon());
+                //panelCursor = new Cursor(bmp.GetHicon());
+                panelCursor = CreateCursorNoResize(bmp);
                 Cursor = panelCursor;
                 Cursor.Current = panelCursor;
             }

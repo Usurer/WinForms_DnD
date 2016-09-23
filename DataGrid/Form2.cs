@@ -1,77 +1,58 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Diagnostics;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace DataGrid
 {
-    public class SuperPanel : Panel
-    {
-        public bool IsHoveredOver { get; set; }
-
-        public int RowIndex { get; set; }
-
-        protected override void OnPaint(PaintEventArgs e)
-        {
-            //base.OnPaint(e);
-            
-            //using (SolidBrush brush = new SolidBrush(BackColor))
-            //{
-            //    e.Graphics.FillRectangle(brush, ClientRectangle);
-            //}
-            e.Graphics.DrawRectangle(IsHoveredOver ? Pens.CornflowerBlue : Pens.Red, 0, 0, ClientSize.Width - 1, ClientSize.Height - 1);
-        }
-    }
-
     public partial class Form2 : Form
     {
         private Rectangle dragBoxFromMouseDown;
-        private SuperPanel draggedPanel; 
+        private SuperPanel draggedPanel;
         private SuperPanel hoveredPanel; // parent, over which the mouse is located
+        private Cursor panelCursor;
 
         public Form2()
         {
-            
             InitializeComponent();
-            
-            this.ClientSize = new System.Drawing.Size(905, 517);
+
+            ClientSize = new Size(905, 517);
             basePanel.Size = new Size(881, 227);
             basePanel.Location = new Point(12, 12);
             basePanel.BorderStyle = BorderStyle.FixedSingle;
             basePanel.AllowDrop = true;
 
             basePanel.MouseEnter += RowTemplate_MouseLeave;
+            basePanel.GiveFeedback += Control_GiveFeedback;
 
             for (var i = 0; i < 3; i++)
             {
-                var row = CreateRow(RowTemplate_MouseMove, i);
+                var row = CreateRow(i);
                 basePanel.Controls.Add(row);
             }
         }
 
-        private void AssignMouseMoveHandler(Control control, MouseEventHandler handler)
+        private void AssignMouseMoveHandler(Control control)
         {
-            control.MouseMove += handler;
-            control.GiveFeedback += Drag_GiveFeedback;
+            control.MouseMove += Control_MouseMove;
+            control.MouseUp += Control_MouseUp;
+            control.GiveFeedback += Control_GiveFeedback;
+            control.AllowDrop = true;
+
             foreach (Control child in control.Controls)
             {
-                child.MouseMove += handler;
-                child.MouseUp += Child_MouseUp;
-                child.GiveFeedback += Drag_GiveFeedback;
+                child.MouseMove += Control_MouseMove;
+                child.MouseUp += Control_MouseUp;
+                child.GiveFeedback += Control_GiveFeedback;
+                control.AllowDrop = true;
+
                 if (child.Controls.Count > 0)
                 {
-                    AssignMouseMoveHandler(child, handler);
+                    AssignMouseMoveHandler(child);
                 }
             }
         }
 
-        private void Child_MouseUp(object sender, MouseEventArgs e)
+        private void Control_MouseUp(object sender, MouseEventArgs e)
         {
             ReleaseDragCursor();
         }
@@ -97,18 +78,57 @@ namespace DataGrid
             basePanel.Update();
         }
 
-        private Panel CreateRow(MouseEventHandler mouseMouseEventHandler, int index)
+        private Panel CreateRow(int index)
         {
             var rowHeight = 53;
 
-            var orderLabel = new Label { Name = "order", Text = index.ToString(), BorderStyle = BorderStyle.FixedSingle, Location = new Point(40, 21), Size = new Size(35, 13)};
-            var flightProblem = new ComboBox { Name = "flightProblem", Location = new Point(113, 18), Size = new Size(226, 21) };
-            var colorPanel = new Panel() { Name = "colorPicker", BorderStyle = BorderStyle.FixedSingle, Location = new Point(385, 18), Size = new Size(43, 21) };
-            var symbol = new ComboBox { Name = "symbol", Location = new Point(434, 18), Size = new Size(77, 21) };
-            var size = new ComboBox { Name = "size", Location = new Point(517, 18), Size = new Size(71, 21) };
-            var showLabel = new CheckBox() { Name = "showLabel", Location = new Point(604, 21), Size = new Size(80, 17) };
+            var orderLabel = CreateOrderLabel(index);
+            var flightProblem = CreateFlightProblemComboBox();
+            var colorPanel = CreateColorPickerPanel();
+            var symbol = CreateSymbolComboBox();
+            var size = CreateSizeComboBox();
+            var showLabel = CreateShowLabelCheckBox();
 
-            var panel = new SuperPanel { Location = new Point(3, 35 + (rowHeight + 5) * index), Size = new Size(875, rowHeight), BorderStyle = BorderStyle.None, RowIndex = index };
+            var panel = CreateRowPanel(index, rowHeight, orderLabel, flightProblem, colorPanel, symbol, size, showLabel);
+
+            AssignRowEventHandlers(panel);
+            AssignDragAnchorEventHandlers(orderLabel);
+
+            return panel;
+        }
+
+        private void AssignDragAnchorEventHandlers(Label orderLabel)
+        {
+            orderLabel.MouseMove += DragAnchor_MouseMove;
+            orderLabel.MouseDown += DragAnchor_MouseDown;
+        }
+
+        private void AssignRowEventHandlers(SuperPanel panel)
+        {
+            panel.DragOver += Control_DragOver;
+            panel.DragOver += Control_MouseMove;
+
+            panel.DragDrop += Row_DragDrop;
+
+            panel.DragEnter += Control_DragEnter;
+            panel.DragEnter += Control_MouseMove;
+
+            panel.MouseUp += Control_MouseUp;
+
+            AssignMouseMoveHandler(panel);
+        }
+
+        private static SuperPanel CreateRowPanel(int index, int rowHeight, Label orderLabel, ComboBox flightProblem,
+            Panel colorPanel, ComboBox symbol, ComboBox size, CheckBox showLabel)
+        {
+            var panel = new SuperPanel
+            {
+                Location = new Point(3, 35 + (rowHeight + 5)*index),
+                Size = new Size(875, rowHeight),
+                BorderStyle = BorderStyle.None,
+                RowIndex = index
+            };
+
             panel.Controls.Add(orderLabel);
             panel.Controls.Add(flightProblem);
             panel.Controls.Add(colorPanel);
@@ -116,34 +136,18 @@ namespace DataGrid
             panel.Controls.Add(size);
             panel.Controls.Add(showLabel);
 
-            panel.DragEnter += Row_DragEnter;
-            panel.DragEnter += RowTemplate_MouseMove;
-            panel.DragOver += Row_DragOver;
-            panel.DragOver += RowTemplate_MouseMove;
-            panel.DragDrop += Row_DragDrop;
             panel.AllowDrop = true;
 
-            panel.MouseUp += Child_MouseUp;
-
-            orderLabel.MouseMove += DragAnchor_MouseMove;
-            orderLabel.MouseDown += DragAnchor_MouseDown;
-            orderLabel.MouseUp += Child_MouseUp;
-
-            AssignMouseMoveHandler(panel, mouseMouseEventHandler);
-
-            panel.MouseMove += mouseMouseEventHandler;
-            //panel.Click += delegate(object sender, EventArgs args) {  panel.IsHoveredOver = panel.IsHoveredOver ? false : true; panel.Controls["order"].Text = panel.IsHoveredOver.ToString(); panel.Invalidate(); panel.Update(); panel.Refresh(); };
-            //panel.Paint += (sender, args) => { panel.Controls["order"].Text = panel.RowIndex.ToString(); panel.Controls["order"].Invalidate(); };
             return panel;
         }
 
-        // TODO: Actually we don't need to handle all children mouse moves. We can set mouse over flag on Panel Mouse Move and remove it on Base Panel mouse move;
-        private void RowTemplate_MouseMove(object sender, EventArgs e)
+        private void Control_MouseMove(object sender, EventArgs e)
         {
-            SuperPanel panel = sender as SuperPanel;
+            var panel = sender as SuperPanel;
             while (sender != this && panel == null)
             {
                 sender = (sender as Control).Parent;
+                panel = sender as SuperPanel;
             }
 
             if (panel != null)
@@ -162,10 +166,7 @@ namespace DataGrid
                 }
             }
 
-            if (draggedPanel != null)
-            {
-                SetDragCursor(draggedPanel);
-            }
+            SetDragCursor();
         }
 
         private void RowTemplate_MouseLeave(object sender, EventArgs e)
@@ -183,24 +184,21 @@ namespace DataGrid
             hoveredPanel = null;
         }
 
-        private void Drag_GiveFeedback(object sender, GiveFeedbackEventArgs e)
+        private void Control_GiveFeedback(object sender, GiveFeedbackEventArgs e)
         {
-            if (draggedPanel != null)
+            e.UseDefaultCursors = false;
+            if (draggedPanel != null && panelCursor != null)
             {
-                if (panelCursor != null)
-                {
-                    Cursor = panelCursor;
-                    Cursor.Current = panelCursor;
-                }
+                Cursor = panelCursor;
+                Cursor.Current = panelCursor;
             }
         }
 
-        private void Row_DragEnter(object sender, DragEventArgs e)
+        private void Control_DragEnter(object sender, DragEventArgs e)
         {
             e.Effect = DragDropEffects.Move;
 
-            if (draggedPanel != null)
-                SetDragCursor(draggedPanel);
+            SetDragCursor();
         }
 
         private void DragAnchor_MouseMove(object sender, MouseEventArgs e)
@@ -211,12 +209,11 @@ namespace DataGrid
                 if (dragBoxFromMouseDown != Rectangle.Empty && !dragBoxFromMouseDown.Contains(e.X, e.Y))
                 {
                     // Proceed with the drag and drop, passing in the list item.                    
-                    DragDropEffects dropEffect = basePanel.DoDragDrop(draggedPanel, DragDropEffects.Copy | DragDropEffects.Move);
+                    var dropEffect = basePanel.DoDragDrop(draggedPanel, DragDropEffects.Copy | DragDropEffects.Move);
                 }
             }
 
-            if (draggedPanel != null)
-                SetDragCursor(draggedPanel);
+            SetDragCursor();
         }
 
         private void DragAnchor_MouseDown(object sender, MouseEventArgs e)
@@ -227,34 +224,29 @@ namespace DataGrid
                 // Remember the point where the mouse down occurred. 
                 // The DragSize indicates the size that the mouse can move 
                 // before a drag event should be started.                
-                Size dragSize = SystemInformation.DragSize;
+                var dragSize = SystemInformation.DragSize;
 
                 // Create a rectangle using the DragSize, with the mouse position being
                 // at the center of the rectangle.
-                dragBoxFromMouseDown = new Rectangle(new Point(e.X - (dragSize.Width / 2), e.Y - (dragSize.Height / 2)), dragSize);
+                dragBoxFromMouseDown = new Rectangle(new Point(e.X - (dragSize.Width/2), e.Y - (dragSize.Height/2)),
+                    dragSize);
             }
 
-            if (draggedPanel != null)
-                SetDragCursor(draggedPanel);
+            SetDragCursor();
         }
 
-        private Cursor panelCursor = null;
-
-        private void SetDragCursor(Panel panel)
+        private void SetDragCursor()
         {
-            if (draggedPanel != null)
+            if (draggedPanel != null && panelCursor == null)
             {
-                if (panelCursor == null)
-                {
-                    var bmp = new Bitmap(panel.Width, panel.Height);
-                    panel.DrawToBitmap(bmp, new Rectangle(Point.Empty, bmp.Size));
-                    //optionally define a transparent color
-                    //bmp.MakeTransparent(System.Drawing.Color.White);
+                var bmp = new Bitmap(draggedPanel.Width, draggedPanel.Height);
+                draggedPanel.DrawToBitmap(bmp, new Rectangle(Point.Empty, bmp.Size));
+                //optionally define a transparent color
+                //bmp.MakeTransparent(System.Drawing.Color.White);
 
-                    panelCursor = new Cursor(bmp.GetHicon());
-                    Cursor = panelCursor;
-                    Cursor.Current = panelCursor;
-                }
+                panelCursor = new Cursor(bmp.GetHicon());
+                Cursor = panelCursor;
+                Cursor.Current = panelCursor;
             }
         }
 
@@ -265,12 +257,11 @@ namespace DataGrid
             draggedPanel = null;
         }
 
-        private void Row_DragOver(object sender, DragEventArgs e)
+        private void Control_DragOver(object sender, DragEventArgs e)
         {
             e.Effect = DragDropEffects.Move;
 
-            if (draggedPanel != null)
-                SetDragCursor(draggedPanel);
+            SetDragCursor();
         }
 
         private void ReorderRows()
@@ -312,12 +303,59 @@ namespace DataGrid
 
         private void Row_DragDrop(object sender, DragEventArgs e)
         {
-            if (/*e.Effect == DragDropEffects.Copy*/true)
+            if ( /*e.Effect == DragDropEffects.Copy*/true)
             {
                 ReorderRows();
                 ReleaseDragCursor();
-                
             }
+        }
+
+        private static CheckBox CreateShowLabelCheckBox()
+        {
+            return new CheckBox { Name = "showLabel", Location = new Point(604, 21), Size = new Size(80, 17) };
+        }
+
+        private static ComboBox CreateSizeComboBox()
+        {
+            return new ComboBox { Name = "size", Location = new Point(517, 18), Size = new Size(71, 21) };
+        }
+
+        private static ComboBox CreateSymbolComboBox()
+        {
+            return new ComboBox { Name = "symbol", Location = new Point(434, 18), Size = new Size(77, 21) };
+        }
+
+        private static Panel CreateColorPickerPanel()
+        {
+            return new Panel
+            {
+                Name = "colorPicker",
+                BorderStyle = BorderStyle.FixedSingle,
+                Location = new Point(385, 18),
+                Size = new Size(43, 21)
+            };
+        }
+
+        private static ComboBox CreateFlightProblemComboBox()
+        {
+            return new ComboBox
+            {
+                Name = "flightProblem",
+                Location = new Point(113, 18),
+                Size = new Size(226, 21)
+            };
+        }
+
+        private static Label CreateOrderLabel(int index)
+        {
+            return new Label
+            {
+                Name = "order",
+                Text = index.ToString(),
+                BorderStyle = BorderStyle.FixedSingle,
+                Location = new Point(40, 21),
+                Size = new Size(35, 13)
+            };
         }
     }
 }

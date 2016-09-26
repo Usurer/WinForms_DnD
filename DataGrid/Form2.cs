@@ -65,14 +65,12 @@ namespace DataGrid
         private void AssignMouseMoveHandler(Control control)
         {
             control.MouseMove += Control_MouseMove;
-            control.MouseUp += Control_MouseUp;
             control.GiveFeedback += Control_GiveFeedback;
             control.AllowDrop = true;
 
             foreach (Control child in control.Controls)
             {
                 child.MouseMove += Control_MouseMove;
-                child.MouseUp += Control_MouseUp;
                 child.GiveFeedback += Control_GiveFeedback;
                 control.AllowDrop = true;
 
@@ -81,12 +79,6 @@ namespace DataGrid
                     AssignMouseMoveHandler(child);
                 }
             }
-        }
-
-        // TODO: Remove this
-        private void Control_MouseUp(object sender, MouseEventArgs e)
-        {
-            ReleaseDragCursor();
         }
 
         // TODO: Unsubscribe mouse handlers if needed
@@ -144,8 +136,6 @@ namespace DataGrid
 
             panel.DragEnter += Control_DragEnter;
             panel.DragEnter += Control_MouseMove;
-
-            panel.MouseUp += Control_MouseUp;
 
             AssignMouseMoveHandler(panel);
         }

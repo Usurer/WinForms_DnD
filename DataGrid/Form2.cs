@@ -42,7 +42,8 @@ namespace DataGrid
             InitializeComponent();
 
             ClientSize = new Size(905, 517);
-            basePanel.Size = new Size(881, 227);
+            //basePanel.Size = new Size(881, 227);
+            basePanel.Size = new Size(881, 10);
             basePanel.Location = new Point(12, 12);
             basePanel.BorderStyle = BorderStyle.FixedSingle;
             basePanel.AllowDrop = true;
@@ -59,6 +60,7 @@ namespace DataGrid
             {
                 var row = CreateRow(i);
                 basePanel.Controls.Add(row);
+                basePanel.Height = basePanel.Height + row.Height + 10;
             }
         }
 
@@ -95,25 +97,34 @@ namespace DataGrid
         {
             foreach (SuperPanel row in basePanel.Controls)
             {
-                row.Location = new Point(3, 35 + (53 + 5)*row.RowIndex);
+                row.Location = new Point(3, 10 + (53 + 10)*row.RowIndex);
             }
 
             basePanel.Invalidate();
             basePanel.Update();
         }
 
-        private Panel CreateRow(int index)
+
+        private int counter = 0;
+
+        private SuperPanel CreateRow(int index)
         {
             var rowHeight = 53;
 
-            var orderLabel = CreateOrderLabel(index);
+            var orderLabel = CreateOrderLabel(counter);
+            counter = counter + 1;
             var flightProblem = CreateFlightProblemComboBox();
             var colorPanel = CreateColorPickerPanel();
             var symbol = CreateSymbolComboBox();
             var size = CreateSizeComboBox();
             var showLabel = CreateShowLabelCheckBox();
+            var addControl = CreateAddControl();
+            var removeControl = CreateRemoveControl();
 
-            var panel = CreateRowPanel(index, rowHeight, orderLabel, flightProblem, colorPanel, symbol, size, showLabel);
+            addControl.MouseClick += AddRow;
+            removeControl.MouseClick += RemoveRow;
+
+            var panel = CreateRowPanel(index, rowHeight, orderLabel, flightProblem, colorPanel, symbol, size, showLabel, addControl, removeControl);
 
             AssignRowEventHandlers(panel);
             AssignDragAnchorEventHandlers(orderLabel);
@@ -141,11 +152,11 @@ namespace DataGrid
         }
 
         private static SuperPanel CreateRowPanel(int index, int rowHeight, Label orderLabel, ComboBox flightProblem,
-            Panel colorPanel, ComboBox symbol, ComboBox size, CheckBox showLabel)
+            Panel colorPanel, ComboBox symbol, ComboBox size, CheckBox showLabel, Control addControl, Control removeControl)
         {
             var panel = new SuperPanel
             {
-                Location = new Point(3, 35 + (rowHeight + 5)*index),
+                Location = new Point(3, 10 + (rowHeight + 10)*index),
                 Size = new Size(875, rowHeight),
                 BorderStyle = BorderStyle.None,
                 RowIndex = index
@@ -157,6 +168,8 @@ namespace DataGrid
             panel.Controls.Add(symbol);
             panel.Controls.Add(size);
             panel.Controls.Add(showLabel);
+            panel.Controls.Add(addControl);
+            panel.Controls.Add(removeControl);
 
             panel.AllowDrop = true;
 
@@ -340,9 +353,49 @@ namespace DataGrid
             }
         }
 
+        private void AddRow(object sender, MouseEventArgs e)
+        {
+            var row = (sender as Control).Parent as SuperPanel;
+            if (row != null)
+            {
+                var newRow = CreateRow(row.RowIndex + 1);
+                foreach (SuperPanel panel in basePanel.Controls)
+                {
+                    if (panel.RowIndex >= newRow.RowIndex)
+                    {
+                        panel.RowIndex = panel.RowIndex + 1;
+                    }
+                }
+
+                basePanel.Controls.Add(newRow);
+                basePanel.Height = basePanel.Height + newRow.Height + 10;
+                UpdateRowsPositioning();
+            }
+        }
+
+        private void RemoveRow(object sender, MouseEventArgs e)
+        {
+            var row = (sender as Control).Parent as SuperPanel;
+            if (row != null)
+            {
+                
+                foreach (SuperPanel panel in basePanel.Controls)
+                {
+                    if (panel.RowIndex > row.RowIndex)
+                    {
+                        panel.RowIndex = panel.RowIndex - 1;
+                    }
+                }
+
+                basePanel.Controls.Remove(row);
+                basePanel.Height = basePanel.Height - row.Height - 10;
+                UpdateRowsPositioning();
+            }
+        }
+
         private static CheckBox CreateShowLabelCheckBox()
         {
-            return new CheckBox { Name = "showLabel", Location = new Point(604, 21), Size = new Size(80, 17) };
+            return new CheckBox { Name = "showLabel", Location = new Point(604, 21), Size = new Size(20, 17) };
         }
 
         private static ComboBox CreateSizeComboBox()
@@ -385,6 +438,30 @@ namespace DataGrid
                 BorderStyle = BorderStyle.FixedSingle,
                 Location = new Point(40, 21),
                 Size = new Size(35, 13)
+            };
+        }
+
+        private static Panel CreateAddControl()
+        {
+            return new Panel
+            {
+                Name = "add",
+                BorderStyle = BorderStyle.FixedSingle,
+                Location = new Point(650, 18),
+                Size = new Size(21, 21),
+                BackColor = Color.DarkGreen,
+            };
+        }
+
+        private static Panel CreateRemoveControl()
+        {
+            return new Panel
+            {
+                Name = "remove",
+                BorderStyle = BorderStyle.FixedSingle,
+                Location = new Point(680, 18),
+                Size = new Size(21, 21),
+                BackColor = Color.Red
             };
         }
     }

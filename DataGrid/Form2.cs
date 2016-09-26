@@ -20,17 +20,21 @@ namespace DataGrid
         [DllImport("user32.dll")]
         public static extern IntPtr CreateIconIndirect(ref IconInfo icon);
 
+       
 
         public static Cursor CreateCursorNoResize(Bitmap bmp)
         {
-            IntPtr ptr = bmp.GetHicon();
+
+            IntPtr icon = bmp.GetHicon();
             IconInfo tmp = new IconInfo();
-            GetIconInfo(ptr, ref tmp);
+            GetIconInfo(icon, ref tmp);
+
             tmp.xHotspot = 0;
             tmp.yHotspot = 0;
             tmp.fIcon = false;
-            ptr = CreateIconIndirect(ref tmp);
-            return new Cursor(ptr);
+
+            icon = CreateIconIndirect(ref tmp);
+            return new Cursor(icon);
         }
 
         public Form2()
@@ -44,6 +48,11 @@ namespace DataGrid
             basePanel.AllowDrop = true;
 
             basePanel.MouseEnter += RowTemplate_MouseLeave;
+
+            basePanel.DragEnter += Control_DragEnter;
+            basePanel.DragDrop += Row_DragDrop;
+            //basePanel.MouseUp += Control_MouseUp;
+
             basePanel.GiveFeedback += Control_GiveFeedback;
 
             for (var i = 0; i < 3; i++)
@@ -74,6 +83,7 @@ namespace DataGrid
             }
         }
 
+        // TODO: Remove this
         private void Control_MouseUp(object sender, MouseEventArgs e)
         {
             ReleaseDragCursor();
@@ -252,9 +262,9 @@ namespace DataGrid
                 // at the center of the rectangle.
                 dragBoxFromMouseDown = new Rectangle(new Point(e.X - (dragSize.Width/2), e.Y - (dragSize.Height/2)),
                     dragSize);
-            }
 
-            SetDragCursor();
+                SetDragCursor();
+            }
         }
 
         private void SetDragCursor()
@@ -264,17 +274,23 @@ namespace DataGrid
                 var bmp = new Bitmap(draggedPanel.Width, draggedPanel.Height);
                 draggedPanel.DrawToBitmap(bmp, new Rectangle(Point.Empty, bmp.Size));
                 //optionally define a transparent color
-                //bmp.MakeTransparent(System.Drawing.Color.White);
+                //bmp.MakeTransparent(draggedPanel.BackColor);
 
                 //panelCursor = new Cursor(bmp.GetHicon());
                 panelCursor = CreateCursorNoResize(bmp);
                 Cursor = panelCursor;
                 Cursor.Current = panelCursor;
+
+                draggedPanel.Hide();
             }
         }
 
         private void ReleaseDragCursor()
         {
+            if (draggedPanel != null)
+            {
+                draggedPanel.Show();
+            }
             Cursor = DefaultCursor;
             panelCursor = null;
             draggedPanel = null;

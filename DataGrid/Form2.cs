@@ -175,6 +175,7 @@ namespace DataGrid
             if (panel != null)
             {
                 hoveredPanel = panel;
+
                 if (!panel.IsHoveredOver)
                 {
                     panel.IsHoveredOver = true;
@@ -306,21 +307,21 @@ namespace DataGrid
             {
                 if (toIndex > fromIndex)
                 {
-                    if (row.RowIndex > fromIndex)
+                    if (row.RowIndex > fromIndex && row.RowIndex <= toIndex)
                     {
-                        if (row.RowIndex <= toIndex)
-                            row.RowIndex = row.RowIndex - 1;
+                        row.RowIndex = row.RowIndex - 1;
                     }
+
                     draggedPanel.RowIndex = toIndex;
                 }
-                else
+                else if (fromIndex > toIndex)
                 {
-                    if (row.RowIndex > toIndex)
+                    if (row.RowIndex < fromIndex && row.RowIndex >= toIndex)
                     {
-                        if (row.RowIndex <= fromIndex)
-                            row.RowIndex = row.RowIndex + 1;
+                        row.RowIndex = row.RowIndex + 1;
                     }
-                    draggedPanel.RowIndex = toIndex + 1;
+
+                    draggedPanel.RowIndex = toIndex;
                 }
 
                 row.Invalidate();
@@ -334,7 +335,7 @@ namespace DataGrid
         {
             if ( /*e.Effect == DragDropEffects.Copy*/true)
             {
-                ReorderRows();
+                //ReorderRows();
                 ReleaseDragCursor();
             }
         }

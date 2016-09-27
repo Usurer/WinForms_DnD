@@ -139,8 +139,7 @@ namespace DataGrid
             AssignMouseMoveHandler(panel);
         }
 
-        private static SuperPanel CreateRowPanel(int index, int rowHeight, Label orderLabel, ComboBox flightProblem,
-            Panel colorPanel, ComboBox symbol, ComboBox size, CheckBox showLabel, Control addControl, Control removeControl)
+        private static SuperPanel CreateRowPanel(int index, int rowHeight, Label orderLabel, ComboBox flightProblem, Panel colorPanel, ComboBox symbol, ComboBox size, CheckBox showLabel, Control addControl, Control removeControl)
         {
             var panel = new SuperPanel
             {
@@ -150,14 +149,14 @@ namespace DataGrid
                 RowIndex = index
             };
 
-            panel.Controls.Add(orderLabel);
-            panel.Controls.Add(flightProblem);
-            panel.Controls.Add(colorPanel);
-            panel.Controls.Add(symbol);
-            panel.Controls.Add(size);
-            panel.Controls.Add(showLabel);
-            panel.Controls.Add(addControl);
-            panel.Controls.Add(removeControl);
+            AddControlToTheRow(panel, orderLabel);
+            AddControlToTheRow(panel, flightProblem);
+            AddControlToTheRow(panel, colorPanel);
+            AddControlToTheRow(panel, symbol);
+            AddControlToTheRow(panel, size);
+            AddControlToTheRow(panel, showLabel);
+            AddControlToTheRow(panel, addControl);
+            AddControlToTheRow(panel, removeControl);
 
             panel.AllowDrop = true;
 
@@ -379,6 +378,22 @@ namespace DataGrid
                 this.Height = this.Height - row.Height - 10;
                 UpdateRowsPositioning();
             }
+        }
+
+        private static void AddControlToTheRow(SuperPanel row, Control ctrl)
+        {
+            var latestIndex = row.Controls.Count - 1;
+            if (latestIndex >= 0)
+            {
+                var latestCtrl = row.Controls[latestIndex];
+                ctrl.Location = new Point(latestCtrl.Location.X + latestCtrl.Width + 15, ctrl.Location.Y);
+            }
+            else
+            {
+                ctrl.Location = new Point(10, ctrl.Location.Y);
+            }
+            
+            row.Controls.Add(ctrl);
         }
 
         private static CheckBox CreateShowLabelCheckBox()

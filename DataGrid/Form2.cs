@@ -17,9 +17,7 @@ namespace DataGrid
             basePanel.Initialize();
             
             this.Controls.Add(basePanel);
-
-            //basePanel.Size = new Size(881, 227);
-
+            this.AutoScroll = true;
         }
 
         

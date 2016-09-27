@@ -383,28 +383,76 @@ namespace DataGrid
 
         private static CheckBox CreateShowLabelCheckBox()
         {
-            return new CheckBox { Name = "showLabel", Location = new Point(604, 21), Size = new Size(20, 17) };
+            var showLabel = new CheckBox
+            {
+                Name = "showLabel",
+                Location = new Point(650, 21),
+                Size = new Size(15, 15),
+                AutoSize = true,
+                TabIndex = 241,
+                UseVisualStyleBackColor = true,
+            };
+            return showLabel;
         }
 
         private static ComboBox CreateSizeComboBox()
         {
-            return new ComboBox { Name = "size", Location = new Point(517, 18), Size = new Size(71, 21) };
+            var size = new ComboBox
+            {
+                Name = "comboBoxSize",
+                Location = new Point(540, 18),
+                Size = new Size(91, 21),
+                DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList,
+                DropDownWidth = 78,
+                FormattingEnabled = true,
+                TabIndex = 230,
+            };
+
+            size.Items.AddRange(new object[]
+            {
+                "1 - Smallest",
+                "2",
+                "3",
+                "4",
+                "5 - Largest"
+            });
+
+            return size;
         }
 
         private static ComboBox CreateSymbolComboBox()
         {
-            return new ComboBox { Name = "symbol", Location = new Point(434, 18), Size = new Size(77, 21) };
+            var comboBoxSymbol = new ComboBox
+            {
+                Name = "comboBoxSymbol",
+                Location = new Point(434, 18),
+                Size = new Size(91, 21),
+                DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed,
+                DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList,
+                FormattingEnabled = true,
+                //ImageList = null,
+                TabIndex = 229,
+            };
+
+            return comboBoxSymbol;
         }
 
         private static Panel CreateColorPickerPanel()
         {
-            return new Panel
+            var colorButton = new Panel
             {
-                Name = "colorPicker",
                 BorderStyle = BorderStyle.FixedSingle,
                 Location = new Point(385, 18),
-                Size = new Size(43, 21)
+                Name = "colorButton",
+                Size = new System.Drawing.Size(31, 25),
+                TabIndex = 235,
+                Text = " ",
             };
+
+            //colorButton.Color = System.Drawing.Color.Empty;
+            //colorButton.UseVisualStyleBackColor = true;
+
+            return colorButton;
         }
 
         private static ComboBox CreateFlightProblemComboBox()
@@ -435,7 +483,7 @@ namespace DataGrid
             {
                 Name = "add",
                 BorderStyle = BorderStyle.FixedSingle,
-                Location = new Point(650, 18),
+                Location = new Point(670, 18),
                 Size = new Size(21, 21),
                 BackColor = Color.DarkGreen,
             };
@@ -447,7 +495,7 @@ namespace DataGrid
             {
                 Name = "remove",
                 BorderStyle = BorderStyle.FixedSingle,
-                Location = new Point(680, 18),
+                Location = new Point(700, 18),
                 Size = new Size(21, 21),
                 BackColor = Color.Red
             };
